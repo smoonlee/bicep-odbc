@@ -1,0 +1,7 @@
+{
+  "PartitionTable": "ODBC04",
+  "RowKey": "",
+  "dsnName": "dsn-connector-04",
+  "dsnFQDN": "sql-server-prod-04.database.windows.net",
+  "dsnDriverName": "ODBC Driver 18 for SQL Server"
+}
