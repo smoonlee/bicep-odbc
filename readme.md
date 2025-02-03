@@ -35,20 +35,20 @@
 | ODBC01         |        | dsn-connector-01 | sql-server.database.windows.net  | ODBC Driver 18 for SQL Server        |
 
 ## Function App (WIP - Futrure Plans)
-### createODBCConnection
-```
-Using HTTP API to Add to Storage Table with a json body
-```
+### createODBC
 
 > JSON Body Example
-``` json
-{
-  "PartitionTable": "ODBC01",
-  "RowKey": "",
-  "dsnName": "dsn-connector-01",
-  "dsnFQDN": "sql-server.database.windows.net",
-  "dsnDriverName": "ODBC Driver 18 for SQL Server"
-}
+``` powershell
+$body = @{
+    "PartitionTable" = "ODBC01"
+    "dsnName"        = "dsn-connector-01"
+    "dsnFQDN"        = "sql-server-prod-01.database.windows.net"
+    "dsnDriverName"  = "ODBC Driver 18 for SQL Server"
+} | ConvertTo-Json
+
+$uri = '<azure-function-http-url>'
+$response = Invoke-WebRequest -Uri $uri -Method Post -Body $body -ContentType "application/json"
+Write-Output "Response: $($response.Content)"
 ```
 
 ### updateODBCConnection
