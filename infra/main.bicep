@@ -293,6 +293,8 @@ module createFunctionApp 'br/public:avm/res/web/site:0.13.1' = {
       FUNCTIONS_EXTENSION_VERSION: '~4'
       FUNCTIONS_WORKER_RUNTIME: 'powershell'
       managedIdentityId: createUserManagedIdentity.outputs.clientId
+      odbcStorageAccountName: 'odbcStorageAccount'
+      odbcStorageTableName: 'odbcTable'
     }
     siteConfig: {
       alwaysOn: false
