@@ -112,105 +112,6 @@ module createResourceGroup 'br/public:avm/res/resources/resource-group:0.4.0' = 
   }
 }]
 
-// Azure Bicep - Compute
-module createNetworkSecurityGroup 'br/public:avm/res/network/network-security-group:0.5.0' = {
-  name: 'createNetworkSecurityGroup'
-  scope: resourceGroup(resourceGroupNames[0])
-  params: {
-    name: networkSecurityGroupName
-    location: location
-    securityRules: [
-      {
-        name: 'ALLOW_RDP_INBOUND_TCP'
-        properties: {
-          priority: 100
-          access: 'Allow'
-          direction: 'Inbound'
-          protocol: 'Tcp'
-          sourceAddressPrefix: publicIp
-          sourcePortRange: '*'
-          destinationAddressPrefix: '*'
-          destinationPortRange: '3389'
-        }
-      }
-    ]
-  }
-  dependsOn: [
-    createResourceGroup
-  ]
-}
-
-module createVirtualNetwork 'br/public:avm/res/network/virtual-network:0.5.1' = {
-  name: 'create-virtual-network'
-  scope: resourceGroup(resourceGroupNames[0])
-  params: {
-    name: virtualNetworkName
-    location: location
-    addressPrefixes: [
-      '10.0.0.0/24'
-    ]
-    subnets: [
-      {
-        name: subnetName
-        addressPrefix: '10.0.0.0/24'
-        networkSecurityGroupResourceId: createNetworkSecurityGroup.outputs.resourceId
-      }
-    ]
-  }
-  dependsOn: [
-    createResourceGroup
-  ]
-}
-
-module createVirtualMachine 'br/public:avm/res/compute/virtual-machine:0.8.0' = [for vmName in vmHostNames: {
-  name: 'create-virtual-machine-${vmName}'
-  scope: resourceGroup(resourceGroupNames[0])
-  params: {
-    name: vmName
-    adminUsername: vmUserName
-    adminPassword: vmUserPassword
-    location: location
-    osType: 'Windows'
-    vmSize: 'Standard_B2ms'
-    zone: 0
-    bootDiagnostics: true
-    secureBootEnabled: true
-    vTpmEnabled: true
-    securityType: 'TrustedLaunch'
-    imageReference: {
-      publisher: 'MicrosoftWindowsServer'
-      offer: 'WindowsServer'
-      sku: '2022-datacenter-azure-edition-hotpatch'
-      version: 'latest'
-    }
-    nicConfigurations: [
-      {
-        ipConfigurations: [
-          {
-            name: 'ipconfig01'
-            pipConfiguration: {
-              name: '${vmName}-pip-01'
-            }
-            subnetResourceId: createVirtualNetwork.outputs.subnetResourceIds[0]
-          }
-        ]
-        nicSuffix: '-nic-01'
-        enableAcceleratedNetworking: false
-      }
-    ]
-    osDisk: {
-      caching: 'ReadWrite'
-      diskSizeGB: 128
-      managedDisk: {
-        storageAccountType: 'Premium_LRS'
-      }
-    }
-  }
-  dependsOn: [
-    createVirtualNetwork
-  ]
-}]
-
 // Azure Bicep - Function App
 module createUserManagedIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.4.0' = {
   name: 'create-userManaged-identity'
@@ -257,7 +158,7 @@ module createKeyVault 'br/public:avm/res/key-vault/vault:0.11.2' = {
   ]
 }
 
-// [AVM Module] - Storage Account
+// [AVM Module] - Storage Account ODBC
 module createOdbcStorageAccount 'br/public:avm/res/storage/storage-account:0.15.0' = {
   name: 'create-storage-account-odbc'
   scope: resourceGroup(resourceGroupNames[1])
@@ -276,6 +177,21 @@ module createOdbcStorageAccount 'br/public:avm/res/storage/storage-account:0.15.
   }
   dependsOn: [
     createResourceGroup
+  ]
+}
+
+// [AVM Module] - Role Base Assignment - Storage Account
+module createRoleAssignmentStorageAccount 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = {
+  name: 'create-role-assignment-storage-account'
+  scope: resourceGroup(resourceGroupNames[1])
+  params: {
+     principalType: 'ServicePrincipal'
+     principalId: createUserManagedIdentity.outputs.principalId
+     resourceId: createOdbcStorageAccount.outputs.resourceId
+      roleDefinitionId: '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3' // Storage Table Data Contributor
+  }
+  dependsOn: [
+    createOdbcStorageAccount
   ]
 }
 
@@ -426,3 +342,102 @@ module createFunctionApp 'br/public:avm/res/web/site:0.13.1' = {
     createAppServicePlan
   ]
 }
+
+// Azure Bicep - Compute
+module createNetworkSecurityGroup 'br/public:avm/res/network/network-security-group:0.5.0' = {
+  name: 'createNetworkSecurityGroup'
+  scope: resourceGroup(resourceGroupNames[0])
+  params: {
+    name: networkSecurityGroupName
+    location: location
+    securityRules: [
+      {
+        name: 'ALLOW_RDP_INBOUND_TCP'
+        properties: {
+          priority: 100
+          access: 'Allow'
+          direction: 'Inbound'
+          protocol: 'Tcp'
+          sourceAddressPrefix: publicIp
+          sourcePortRange: '*'
+          destinationAddressPrefix: '*'
+          destinationPortRange: '3389'
+        }
+      }
+    ]
+  }
+  dependsOn: [
+    createResourceGroup
+  ]
+}
+
+module createVirtualNetwork 'br/public:avm/res/network/virtual-network:0.5.1' = {
+  name: 'create-virtual-network'
+  scope: resourceGroup(resourceGroupNames[0])
+  params: {
+    name: virtualNetworkName
+    location: location
+    addressPrefixes: [
+      '10.0.0.0/24'
+    ]
+    subnets: [
+      {
+        name: subnetName
+        addressPrefix: '10.0.0.0/24'
+        networkSecurityGroupResourceId: createNetworkSecurityGroup.outputs.resourceId
+      }
+    ]
+  }
+  dependsOn: [
+    createResourceGroup
+  ]
+}
+
+module createVirtualMachine 'br/public:avm/res/compute/virtual-machine:0.8.0' = [for vmName in vmHostNames: {
+  name: 'create-virtual-machine-${vmName}'
+  scope: resourceGroup(resourceGroupNames[0])
+  params: {
+    name: vmName
+    adminUsername: vmUserName
+    adminPassword: vmUserPassword
+    location: location
+    osType: 'Windows'
+    vmSize: 'Standard_B2ms'
+    zone: 0
+    bootDiagnostics: true
+    secureBootEnabled: true
+    vTpmEnabled: true
+    securityType: 'TrustedLaunch'
+    imageReference: {
+      publisher: 'MicrosoftWindowsServer'
+      offer: 'WindowsServer'
+      sku: '2022-datacenter-azure-edition-hotpatch'
+      version: 'latest'
+    }
+    nicConfigurations: [
+      {
+        ipConfigurations: [
+          {
+            name: 'ipconfig01'
+            pipConfiguration: {
+              name: '${vmName}-pip-01'
+            }
+            subnetResourceId: createVirtualNetwork.outputs.subnetResourceIds[0]
+          }
+        ]
+        nicSuffix: '-nic-01'
+        enableAcceleratedNetworking: false
+      }
+    ]
+    osDisk: {
+      caching: 'ReadWrite'
+      diskSizeGB: 128
+      managedDisk: {
+        storageAccountType: 'Premium_LRS'
+      }
+    }
+  }
+  dependsOn: [
+    createVirtualNetwork
+  ]
+}]
