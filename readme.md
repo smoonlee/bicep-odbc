@@ -10,7 +10,9 @@ In the past, when everything was on-premises and domain-joined, deploying an ODB
 However, when using Azure SQL with an FQDN like mydatabase.database.windows.net, you encounter the following error:
 
 <br>
-<img src="https://github.com/user-attachments/assets/71a9ff10-3c13-47c2-b934-7ffdf328362d" width="600" height="auto">
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/71a9ff10-3c13-47c2-b934-7ffdf328362d" width="600" height="auto">
+</div>
 <br>
 <br>
 
