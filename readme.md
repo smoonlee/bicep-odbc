@@ -25,7 +25,7 @@ Rather than setting up a [split DNS](https://learn.microsoft.com/en-us/windows-s
 
 ## Azure Resouces
  - For the PoC Lab I created for testing, The Bicep deploys the following resources.
- - Two Resource Groups: rg-computer-${environmentType}-${locationShortCode} rg-compute-${environmentType}-${locationShortCode}
+ - Two Resource Groups: `rg-computer-${environmentType}-${locationShortCode}` `rg-compute-${environmentType}-${locationShortCode}`
  - Two Windows Virtual Machines
  - Two Storage Accounts (one for ODBC Connections) (One for Function App)
  - App Service Plan (Y1)
