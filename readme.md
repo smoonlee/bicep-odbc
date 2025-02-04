@@ -47,7 +47,7 @@ Rather than setting up a [split DNS](https://learn.microsoft.com/en-us/windows-s
 |----------------|--------|------------------|-----------------------------------|-------------------------------------|
 | ODBC01         |        | dsn-connector-01 | sql-server.database.windows.net  | ODBC Driver 18 for SQL Server        |
 
-## Function App (WIP - Futrure Plans)
+## Function App
 
 ### createODBC
 
