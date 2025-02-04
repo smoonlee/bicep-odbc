@@ -60,12 +60,12 @@ param kvNetworkAcls object = {
   bypass: 'AzureServices'
   defaultAction: 'Allow'
 }
-param kvSecretArray array = [
-]
-
+param kvSecretArray array = []
 
 // Storage Account Variables
 param odbcStorageAccountName string = 'stodbc${environmentType}${locationShortCode}'
+param odbcStorageTableName string = 'odbcDSN'
+
 param funcStorageAccountName string = 'stfunc${projectName}${environmentType}${locationShortCode}'
 param stSkuName string = 'Standard_GRS'
 param stTlsVersion string = 'TLS1_2'
@@ -95,22 +95,24 @@ param functionAppName string = 'func-${projectName}-${environmentType}-${locatio
 // Bicep Deployment Variables
 
 param resourceGroupNames array = [
-  'rg-compute-${environmentType}-${locationShortCode}'
-  'rg-function-${environmentType}-${locationShortCode}'
+  'rg-x-compute-${environmentType}-${locationShortCode}'
+  'rg-x-function-${environmentType}-${locationShortCode}'
 ]
 
 //
 // Azure Verified Modules - No Hard Coded Values below this line!
 
-module createResourceGroup 'br/public:avm/res/resources/resource-group:0.4.0' = [for (rg, i) in array(resourceGroupNames): {
-  name: 'create-resource-group-${i}'
-  scope: subscription()
-  params: {
-    name: rg
-    location: location
-    tags: tags
+module createResourceGroup 'br/public:avm/res/resources/resource-group:0.4.0' = [
+  for (rg, i) in array(resourceGroupNames): {
+    name: 'create-resource-group-${i}'
+    scope: subscription()
+    params: {
+      name: rg
+      location: location
+      tags: tags
+    }
   }
-}]
+]
 
 // Azure Bicep - Function App
 module createUserManagedIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.4.0' = {
@@ -142,12 +144,7 @@ module createKeyVault 'br/public:avm/res/key-vault/vault:0.11.2' = {
     roleAssignments: [
       {
         principalId: createUserManagedIdentity.outputs.principalId
-        roleDefinitionIdOrName: 'Key Vault Administrator'
-        principalType: 'ServicePrincipal'
-      }
-      {
-        principalId: createUserManagedIdentity.outputs.principalId
-        roleDefinitionIdOrName: 'Key Vault Secrets Officer'
+        roleDefinitionIdOrName: 'Key Vault Secrets User'
         principalType: 'ServicePrincipal'
       }
     ]
@@ -172,8 +169,12 @@ module createOdbcStorageAccount 'br/public:avm/res/storage/storage-account:0.15.
     networkAcls: stNetworkAcls
     tags: tags
     tableServices: {
-      enabled: true
-    }
+          tables: [
+            {
+              name: odbcStorageTableName
+            }
+          ]
+        }
   }
   dependsOn: [
     createResourceGroup
@@ -185,10 +186,10 @@ module createRoleAssignmentStorageAccount 'br/public:avm/ptn/authorization/resou
   name: 'create-role-assignment-storage-account'
   scope: resourceGroup(resourceGroupNames[1])
   params: {
-     principalType: 'ServicePrincipal'
-     principalId: createUserManagedIdentity.outputs.principalId
-     resourceId: createOdbcStorageAccount.outputs.resourceId
-      roleDefinitionId: '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3' // Storage Table Data Contributor
+    principalType: 'ServicePrincipal'
+    principalId: createUserManagedIdentity.outputs.principalId
+    resourceId: createOdbcStorageAccount.outputs.resourceId
+    roleDefinitionId: '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3' // Storage Table Data Contributor
   }
   dependsOn: [
     createOdbcStorageAccount
@@ -293,8 +294,9 @@ module createFunctionApp 'br/public:avm/res/web/site:0.13.1' = {
       FUNCTIONS_EXTENSION_VERSION: '~4'
       FUNCTIONS_WORKER_RUNTIME: 'powershell'
       managedIdentityId: createUserManagedIdentity.outputs.clientId
-      odbcStorageAccountName: 'odbcStorageAccount'
-      odbcStorageTableName: 'odbcTable'
+      odbcStorageAccountName: odbcStorageAccountName
+      odbcStorageTableName: odbcStorageTableName
+      vmNameArray: ''
     }
     siteConfig: {
       alwaysOn: false
@@ -395,51 +397,70 @@ module createVirtualNetwork 'br/public:avm/res/network/virtual-network:0.5.1' = 
   ]
 }
 
-module createVirtualMachine 'br/public:avm/res/compute/virtual-machine:0.8.0' = [for vmName in vmHostNames: {
-  name: 'create-virtual-machine-${vmName}'
-  scope: resourceGroup(resourceGroupNames[0])
-  params: {
-    name: vmName
-    adminUsername: vmUserName
-    adminPassword: vmUserPassword
-    location: location
-    osType: 'Windows'
-    vmSize: 'Standard_B2ms'
-    zone: 0
-    bootDiagnostics: true
-    secureBootEnabled: true
-    vTpmEnabled: true
-    securityType: 'TrustedLaunch'
-    imageReference: {
-      publisher: 'MicrosoftWindowsServer'
-      offer: 'WindowsServer'
-      sku: '2022-datacenter-azure-edition-hotpatch'
-      version: 'latest'
-    }
-    nicConfigurations: [
-      {
-        ipConfigurations: [
-          {
-            name: 'ipconfig01'
-            pipConfiguration: {
-              name: '${vmName}-pip-01'
+module createVirtualMachine 'br/public:avm/res/compute/virtual-machine:0.8.0' = [
+  for vmName in vmHostNames: {
+    name: 'create-virtual-machine-${vmName}'
+    scope: resourceGroup(resourceGroupNames[0])
+    params: {
+      name: vmName
+      adminUsername: vmUserName
+      adminPassword: vmUserPassword
+      location: location
+      osType: 'Windows'
+      vmSize: 'Standard_B2ms'
+      zone: 0
+      bootDiagnostics: true
+      secureBootEnabled: true
+      vTpmEnabled: true
+      securityType: 'TrustedLaunch'
+      imageReference: {
+        publisher: 'MicrosoftWindowsServer'
+        offer: 'WindowsServer'
+        sku: '2022-datacenter-azure-edition-hotpatch'
+        version: 'latest'
+      }
+      nicConfigurations: [
+        {
+          ipConfigurations: [
+            {
+              name: 'ipconfig01'
+              pipConfiguration: {
+                name: '${vmName}-pip-01'
+              }
+              subnetResourceId: createVirtualNetwork.outputs.subnetResourceIds[0]
             }
-            subnetResourceId: createVirtualNetwork.outputs.subnetResourceIds[0]
-          }
-        ]
-        nicSuffix: '-nic-01'
-        enableAcceleratedNetworking: false
-      }
-    ]
-    osDisk: {
-      caching: 'ReadWrite'
-      diskSizeGB: 128
-      managedDisk: {
-        storageAccountType: 'Premium_LRS'
+          ]
+          nicSuffix: '-nic-01'
+          enableAcceleratedNetworking: false
+        }
+      ]
+      osDisk: {
+        caching: 'ReadWrite'
+        diskSizeGB: 128
+        managedDisk: {
+          storageAccountType: 'Premium_LRS'
+        }
       }
     }
+    dependsOn: [
+      createVirtualNetwork
+    ]
   }
-  dependsOn: [
-    createVirtualNetwork
-  ]
-}]
+]
+
+// [AVM Module] - Role Base Assignment - Storage Account
+module createRoleAssignmentVirtualMachine 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = [
+  for (vmName, i) in array(vmHostNames): {
+    name: 'create-role-assignment-storage-account-${i}'
+    scope: resourceGroup(resourceGroupNames[0])
+    params: {
+      principalType: 'ServicePrincipal'
+      principalId: createUserManagedIdentity.outputs.principalId
+      resourceId: createVirtualMachine[i].outputs.resourceId
+      roleDefinitionId: '9980e02c-c2be-4d73-94e8-173b1dc7cf3c' // Virtual Machine Contributor
+    }
+    dependsOn: [
+      createVirtualMachine
+    ]
+  }
+]
