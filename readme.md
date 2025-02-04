@@ -18,10 +18,10 @@
  - User Managed Identity 
 
 ## Azure Role Based Assignment
-| Resource        | ResouceId        | Role Assignment                 | Role Assignment Guid                 | Scope                              |
-|-----------------|------------------|---------------------------------|--------------------------------------|------------------------------------|
-| Storage Account | Managed Identity | Storage Table Data Contributor  | 0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3 | Used to Create/Update/Read odbcDSN |
-| Virtual Machine | Managed Identity | Virtual Machine Contributor     | 9980e02c-c2be-4d73-94e8-173b1dc7cf3c | Required for RunPowerShellCommand  |
+| Resource        | ResouceId        | Role Assignment                 | Role Assignment Guid                 | RBAC Scope                               |
+|-----------------|------------------|---------------------------------|--------------------------------------|------------------------------------------|
+| Storage Account | Managed Identity | Storage Table Data Contributor  | 0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3 | Used to Create/Update/Read odbcDSN table |
+| Virtual Machine | Managed Identity | Virtual Machine Contributor     | 9980e02c-c2be-4d73-94e8-173b1dc7cf3c | Required for RunPowerShellCommand        |
 
 ## ODBC Windows Connector Requirements
 
