@@ -3,7 +3,7 @@
 ## Project Scope
  - We need to be able to deploy FQDN Connections to the ODBC Data Source Name
  - Needs to be automated and scaleable
- - Having attempted to add FQDN Connections using group policy, this is not supported, As it expects hostname only 'vm-sql-prod-01' but not 'vm-sql-prod-01.contoso.com'
+ - Having attempted to add FQDN Connections using group policy, this is not supported, As it expects hostname only `vm-sql-prod-01` but not `vm-sql-prod-01.contoso.com`
 
 ## The Problem
 In the past, when everything was on-premises and domain-joined, deploying an ODBC connection via Group Policy was simple—you'd just add vm-sql-prod-01, and it worked seamlessly.
@@ -25,7 +25,7 @@ Rather than setting up a [split DNS](https://learn.microsoft.com/en-us/windows-s
 
 ## Azure Resouces
  - For the PoC Lab I created for testing, The Bicep deploys the following resources.
- - Two Resource Groups (rg-computer-${environmentType}-${locationShortCode} rg-compute-${environmentType}-${locationShortCode}
+ - Two Resource Groups: rg-computer-${environmentType}-${locationShortCode} rg-compute-${environmentType}-${locationShortCode}
  - Two Windows Virtual Machines
  - Two Storage Accounts (one for ODBC Connections) (One for Function App)
  - App Service Plan (Y1)
