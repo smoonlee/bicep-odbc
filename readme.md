@@ -1,9 +1,14 @@
-# ODBC Connector - Azure Function App.
+# ODBC Connector - Azure Function App
 
 ## Project Scope
  - We need to be able to deploy ODBC Connections to Virtual Machines
  - Needs to be automated and scaleable
  - Having attempted to add FQDN Connections using group policy, this is not supported, As it expects hostname only 'vm-sql-prod-01' but not 'vm-sql-prod-01.contoso.com'
+
+## ODBC Windows Connector Requirements
+
+- [Visual Studio RunTime (64x)](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version)
+- [ODBC Driver for SQL](https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server)
 
 ## Azure Resouces
  - For the PoC Lab I created for testing, The Bicep deploys the following resources.
@@ -23,11 +28,6 @@
 | Storage Account | Managed Identity | Storage Table Data Contributor  | 0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3 | Used to Create/Update/Read odbcDSN table |
 | Virtual Machine | Managed Identity | Virtual Machine Contributor     | 9980e02c-c2be-4d73-94e8-173b1dc7cf3c | Required for RunPowerShellCommand        |
 
-## ODBC Windows Connector Requirements
-
-- [Visual Studio RunTime (64x)](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version)
-- [ODBC Driver for SQL](https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server)
-
 ## Azure Table Storage Overview
 
 | PartitionTable | RowKey | dsnName          | dsnFQDN                           | dsnDriverName                       |
@@ -35,6 +35,7 @@
 | ODBC01         |        | dsn-connector-01 | sql-server.database.windows.net  | ODBC Driver 18 for SQL Server        |
 
 ## Function App (WIP - Futrure Plans)
+
 ### createODBC
 
 > JSON Body Example
@@ -52,6 +53,7 @@ Write-Output "Response: $($response.Content)"
 ```
 
 ### updateODBCConnection
+
 ```
 timer Trigger to update ODBC Connection on VM
 ```
