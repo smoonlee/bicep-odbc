@@ -65,6 +65,6 @@ git clone https://github.com/smoonlee/bicep-odbc.git
 
 > Execute Bicep
 ``` bash
-.\Infra\.\Invoke-AzDeployment.ps1 -targetscope sub -subscriptionId <subscriptionId> -location <location> -environmentType <dev | acc | prod> -deploy
+.\Infra\Invoke-AzDeployment.ps1 -targetscope sub -subscriptionId <subscriptionId> -location <location> -environmentType <dev | acc | prod> -deploy
 ```
 
