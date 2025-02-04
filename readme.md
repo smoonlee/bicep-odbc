@@ -16,7 +16,7 @@ However, when using Azure SQL with an FQDN like mydatabase.database.windows.net,
 <br>
 <br>
 
-Rather than setting up a split DNS zone—which isn't ideal—I explored alternative solutions. A Function App seemed like a promising approach, offering a scalable and eventually zero-touch deployment method.
+Rather than setting up a [split DNS](https://learn.microsoft.com/en-us/windows-server/networking/dns/deploy/dns-sb-with-ad) zone — which isn't ideal — tI explored alternative solutions. A Function App seemed like a promising approach, offering a scalable and eventually zero-touch deployment method.
 
 ## ODBC Windows Connector Requirements
 
