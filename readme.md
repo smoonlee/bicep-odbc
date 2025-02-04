@@ -1,9 +1,20 @@
 # ODBC Connector - Azure Function App
 
 ## Project Scope
- - We need to be able to deploy ODBC Connections to Virtual Machines
+ - We need to be able to deploy FQDN Connections to the ODBC Data Source Name
  - Needs to be automated and scaleable
  - Having attempted to add FQDN Connections using group policy, this is not supported, As it expects hostname only 'vm-sql-prod-01' but not 'vm-sql-prod-01.contoso.com'
+
+## The Problem
+In the past, when everything was on-premises and domain-joined, deploying an ODBC connection via Group Policy was simple—you'd just add vm-sql-prod-01, and it worked seamlessly.
+However, when using Azure SQL with an FQDN like mydatabase.database.windows.net, you encounter the following error:
+
+<br>
+<img src="https://github.com/user-attachments/assets/71a9ff10-3c13-47c2-b934-7ffdf328362d" width="600" height="auto">
+<br>
+<br>
+
+Rather than setting up a split DNS zone—which isn't ideal—I explored alternative solutions. A Function App seemed like a promising approach, offering a scalable and eventually zero-touch deployment method.
 
 ## ODBC Windows Connector Requirements
 
