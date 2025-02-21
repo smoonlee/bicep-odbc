@@ -21,19 +21,28 @@ $data = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get -ContentType "
 $odbcConfigs = $data.value
 
 # Array of VM names
-$vmNameArray = @('vm-windows-01', 'vm-windows-02')
+$vmNameArray = $env:vmNameArray -split ','
 
-# Loop through the VM names and send ODBC configuration for installation
+# Loop through the VM names and apply ODBC configurations
 foreach ($vmName in $vmNameArray) {
-    foreach ($odbcConfig in $odbcConfigs) {
-        # Create the PowerShell script to be executed on the VM
-        $script = @"
+    $vmName = $vmName.Trim("'"," ")
+    
+    try {
+        $vm = Get-AzVM -ResourceName $vmName -ErrorAction Stop
+        $vmResourceGroup = $vm.ResourceGroupName
+
+        foreach ($odbcConfig in $odbcConfigs) {
+            # Create the PowerShell script to be executed on the VM
+            $script = @"
 Add-OdbcDsn -Name '$($odbcConfig.dsnName)' -DriverName '$($odbcConfig.dsnDriverName)' -DsnType 'System' -SetPropertyValue @('Server=$($odbcConfig.dsnFqdn)')
 "@
 
-        # Send the PowerShell script to the VM using Azure VM extension
-        $runPowerShellCmd = Invoke-AzVMRunCommand -ResourceGroupName 'rg-compute-dev-weu' -VMName $vmName -CommandId 'RunPowerShellScript' -ScriptString $script
-
-        Write-Output "Running ODBC configuration on $vmName using Azure VM RunPowerShellCommand: $runPowerShellCmd.Status"
+            # Execute the PowerShell script on the VM using Azure VM extension
+            $runPowerShellCmd = Invoke-AzVMRunCommand -ResourceGroupName $vmResourceGroup -VMName $vmName -CommandId 'RunPowerShellScript' -ScriptString $script -ErrorAction Stop
+            
+            Write-Host "Successfully configured ODBC on VM: $vmName (Status: $($runPowerShellCmd.Status))"
+        }
+    } catch {
+        Write-Error "Failed to configure ODBC on VM: $vmName. Error: $_"
     }
 }
